@@ -1,0 +1,6 @@
+artifacts
+client.jar
+server.jar
+*-mappings.txt
+node_modules
+yarn.lock
