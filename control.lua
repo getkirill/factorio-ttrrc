@@ -1,6 +1,9 @@
 mod_gui = require("mod-gui")
 science_flow = nil
 resource_flow = nil
+main_frame = nil
+main_frame_flow = nil
+main_frame_button = nil
 detect_science_recipe = function(ingrs, c)
     local red_sc = 0
     local green_sc = 0
@@ -69,6 +72,10 @@ recursive_technology_recipe = function(tech, player)
 end
 calculate_total_raw = function(event)
     local player = game.get_player(event.player_index)
+    if not science_flow or not resource_flow then
+        science_flow = mod_gui.get_frame_flow(player)["ttrrc_main_frame"]["ttrrc_main_frame_flow"]["ttrrc_total_science_flow"]
+        resource_flow = mod_gui.get_frame_flow(player)["ttrrc_main_frame"]["ttrrc_main_frame_flow"]["ttrrc_total_raw_flow"]
+    end
     local tech_name = event.element.elem_value
     if tech_name == nil then
         science_flow["ttrrc_total_flow_red"].number = 0
@@ -170,9 +177,19 @@ calculate_total_raw = function(event)
     end
 end
 -- Runtime
-script.on_event(defines.events.on_player_created, function(event)
-    local player = game.get_player(event.player_index)
-
+function createGui(player)
+    --[[ if main_frame or mod_gui.get_frame_flow(player)["ttrrc_main_frame"] then
+        mod_gui.get_frame_flow(player)["ttrrc_main_frame"].destroy()
+        main_frame = nil
+    end
+    if main_frame_button or mod_gui.get_button_flow(player)["ttrrc_main_frame_button"] then
+        mod_gui.get_button_flow(player)["ttrrc_main_frame_button"].destroy()
+        main_frame_button = nil
+    end ]]
+    --game.print(mod_gui.get_frame_flow(player)["ttrrc_main_frame"].." "..mod_gui.get_button_flow(player)["ttrrc_main_frame_button"])
+    if mod_gui.get_frame_flow(player)["ttrrc_main_frame"] or mod_gui.get_button_flow(player)["ttrrc_main_frame_frame"] then
+        return
+    end
     local frame_flow = mod_gui.get_frame_flow(player)
     local button_flow = mod_gui.get_button_flow(player)
     main_frame = frame_flow.add {
@@ -180,31 +197,43 @@ script.on_event(defines.events.on_player_created, function(event)
         name = "ttrrc_main_frame",
         caption = {"ttrrc-main-frame.title"}
     }
-    local main_frame_flow = main_frame.add {
+    main_frame_flow = main_frame.add {
         type = "flow",
         name = "ttrrc_main_frame_flow",
         direction = "vertical"
     }
-    local main_frame_button = button_flow.add {
+    main_frame_button = button_flow.add {
         type = "sprite-button",
         name = "ttrrc_main_frame_button",
         tooltip = "TTRRC",
         sprite = "item/space-science-pack"
     }
-    --main_frame.style.size = {385, 225}
+    -- main_frame.style.size = {385, 225}
     if game.difficulty_settings.recipe_difficulty == defines.difficulty_settings.recipe_difficulty.expensive then
         main_frame_flow.add {
             type = "label",
             name = "ttrrc_expensive_warning_label_1",
             caption = {"ttrrc-main-frame.expensive-warning-1"}
         }
-        main_frame_flow["ttrrc_expensive_warning_label_1"].style.font_color = {r=1, g=1, b=0, a=1}
+        main_frame_flow["ttrrc_expensive_warning_label_1"].style.font_color =
+            {
+                r = 1,
+                g = 1,
+                b = 0,
+                a = 1
+            }
         main_frame_flow.add {
             type = "label",
             name = "ttrrc_expensive_warning_label_2",
             caption = {"ttrrc-main-frame.expensive-warning-2"}
         }
-        main_frame_flow["ttrrc_expensive_warning_label_2"].style.font_color = {r=1, g=1, b=0, a=1}
+        main_frame_flow["ttrrc_expensive_warning_label_2"].style.font_color =
+            {
+                r = 1,
+                g = 1,
+                b = 0,
+                a = 1
+            }
     end
     main_frame_flow.add {
         type = "label",
@@ -303,15 +332,19 @@ script.on_event(defines.events.on_player_created, function(event)
         sprite = "fluid/crude-oil",
         number = 0
     }
+end
+script.on_event(defines.events.on_player_created, function(event)
+    local player = game.get_player(event.player_index)
+    createGui(player)
 end)
 script.on_event(defines.events.on_gui_click, function(event)
-    -- local player = game.get_player(event.player_index)
+    local player = game.get_player(event.player_index)
     if event.element.name == "ttrrc_main_frame_button" then
-        if main_frame.visible then
-            main_frame.visible = false
-        else
-            main_frame.visible = true
-        end
+        mod_gui.get_frame_flow(player)["ttrrc_main_frame"].visible = not mod_gui.get_frame_flow(player)["ttrrc_main_frame"].visible
     end
 end)
 script.on_event(defines.events.on_gui_elem_changed, calculate_total_raw)
+script.on_event(defines.events.on_player_joined_game, function(event)
+    local player = game.get_player(event.player_index)
+    createGui(player)
+end)
